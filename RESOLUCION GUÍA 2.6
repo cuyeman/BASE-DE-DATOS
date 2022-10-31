@@ -1,0 +1,247 @@
+--CASO 1
+
+
+UNDEFINE  anno;
+UNDEFINE  mes;
+SELECT
+'&&anno'||'&&mes' as "ANNOMES"
+--extract (year from fecha_ini_arriendo)||extract (month from fecha_ini_arriendo) as "ANNOMES"
+,e.numrun_emp
+,e.pnombre_emp
+,e.sueldo_base
+,count(ac.id_arriendo) as "TOTAL ARRIENDOS MENSUALES"
+, round((count(ac.id_arriendo)/100)*e.sueldo_base) AS "BONIFICACIÓN POR ARRIENDOS"
+FROM
+    empleado e left join camion c on (e.numrun_emp=c.numrun_emp)
+    LEFT JOIN arriendo_camion ac on (c.nro_patente=ac.nro_patente)
+WHERE
+extract (month from fecha_ini_arriendo)  = '&mes'
+and extract (year from fecha_ini_arriendo)  = '&anno'
+group by 
+e.numrun_emp
+,e.pnombre_emp
+,e.sueldo_base
+;
+
+--CASO 2
+
+--creación de tabla solicitada
+  CREATE TABLE "MDY2131_P10"."CLIENTES_COMPRAS_MENOS_PROM" 
+   (	"CORRELATIVO" NUMBER(10,0) GENERATED ALWAYS AS IDENTITY MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE  NOKEEP  NOSCALE  NOT NULL ENABLE, 
+	"ANNO_PROCESO" NUMBER(4,0) NOT NULL ENABLE, 
+	"NOMBRE_CLIENTE" VARCHAR2(50 BYTE) NOT NULL ENABLE, 
+	"TOTAL_COMPRAS" NUMBER(5,0) NOT NULL ENABLE, 
+	 CONSTRAINT "PK_CL_COMPRAS_MENOS_PROM_V2" PRIMARY KEY ("CORRELATIVO")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  TABLESPACE "USERS"  ENABLE
+   ) SEGMENT CREATION DEFERRED 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  TABLESPACE "USERS" ;
+
+--query para verificar la cantidad de reggistros por año
+    
+SELECT
+distinct (extract (year from fecha_ini_arriendo)) año
+,count(1) cantidad_arriendos
+from arriendo_camion
+group by
+extract(year from fecha_ini_arriendo);
+
+--query para obtener la cantidad de arriendos a clientes por año
+
+SELECT
+distinct (extract (year from fecha_ini_arriendo)) "año"
+,count(id_arriendo) "cantidad_arriendos"
+,numrun_cli
+,count(numrun_cli) conteo
+from arriendo_camion
+where (extract (year from fecha_ini_arriendo)) = 2020
+group by
+numrun_cli,
+extract(year from fecha_ini_arriendo)
+having count(numrun_cli)!=0;
+
+
+-- obtenemos el promedio de arriendos por cliente
+
+SELECT
+round(avg(count(numrun_cli)))promedio
+from arriendo_camion
+where (extract (year from fecha_ini_arriendo)) = 2020
+group by
+numrun_cli;
+
+--promedio limpio para asignar variables de comparación
+
+SELECT  round(avg(count(ac.numrun_cli))) from arriendo_camion ac where (extract (year from ac.fecha_ini_arriendo)) = 2020 group by numrun_cli;
+
+
+--select de cantidad de arriendos en el año por rut unico
+  select
+ ac.numrun_cli,
+ '&anno' as anno
+  ,count(ac.id_arriendo) "CANTIDAD ARRIENDO"
+  from arriendo_camion ac 
+  where extract (year from ac.fecha_ini_arriendo)='&anno' 
+  group by ac.numrun_cli;
+  
+--cantidad de arriendos por rut unico  limpia para asignar a variables 
+    select count(ac.id_arriendo)  from arriendo_camion ac where extract (year from ac.fecha_ini_arriendo)='&anno'  group by ac.numrun_cli;
+
+
+--query para resolver el primer insert
+select
+'&&anno' ANNO_PROCESO
+,  C.PNOMBRE_CLI||' '||C.SNOMBRE_CLI||' '||C.APPATERNO_CLI||' '||C.APMATERNO_CLI AS "NOMBRE_CLIENTE"
+,count(ac.id_arriendo) "CANTIDAD ARRIENDO"
+from arriendo_camion ac  join cliente c on (ac.numrun_cli=c.numrun_cli)
+and 
+extract (year from ac.fecha_ini_arriendo)='&anno'
+  GROUP BY 
+  C.PNOMBRE_CLI
+  ,C.SNOMBRE_CLI
+  ,C.APPATERNO_CLI
+  ,C.APMATERNO_CLI
+having count(ac.id_arriendo)=(SELECT  round(avg(count(ac.numrun_cli))) from arriendo_camion ac where (extract (year from ac.fecha_ini_arriendo)) = '&anno' group by numrun_cli)
+  union all
+ select
+'&anno' ANNO_PROCESO
+,  C.PNOMBRE_CLI||' '||C.SNOMBRE_CLI||' '||C.APPATERNO_CLI||' '||C.APMATERNO_CLI AS "NOMBRE_CLIENTE"
+,count(ac.id_arriendo) "CANTIDAD ARRIENDO"
+from arriendo_camion ac full outer join cliente c on (ac.numrun_cli=c.numrun_cli)
+and 
+extract (year from ac.fecha_ini_arriendo)!='&anno'
+  GROUP BY 
+  C.PNOMBRE_CLI
+  ,C.SNOMBRE_CLI
+  ,C.APPATERNO_CLI
+  ,C.APMATERNO_CLI
+  having count(ac.id_arriendo)=0
+;
+
+-- añadiendo el insert
+INSERT INTO clientes_compras_menos_prom (anno_proceso,nombre_cliente,total_compras)
+select
+'&&anno' ANNO_PROCESO
+,  C.PNOMBRE_CLI||' '||C.SNOMBRE_CLI||' '||C.APPATERNO_CLI||' '||C.APMATERNO_CLI AS "NOMBRE_CLIENTE"
+,count(ac.id_arriendo) "CANTIDAD ARRIENDO"
+from arriendo_camion ac  join cliente c on (ac.numrun_cli=c.numrun_cli)
+and 
+extract (year from ac.fecha_ini_arriendo)='&anno'
+  GROUP BY 
+  C.PNOMBRE_CLI
+  ,C.SNOMBRE_CLI
+  ,C.APPATERNO_CLI
+  ,C.APMATERNO_CLI
+having count(ac.id_arriendo)=(SELECT  round(avg(count(ac.numrun_cli))) from arriendo_camion ac where (extract (year from ac.fecha_ini_arriendo)) = '&anno' group by numrun_cli)
+  union all
+ select
+'&anno' ANNO_PROCESO
+,  C.PNOMBRE_CLI||' '||C.SNOMBRE_CLI||' '||C.APPATERNO_CLI||' '||C.APMATERNO_CLI AS "NOMBRE_CLIENTE"
+,count(ac.id_arriendo) "CANTIDAD ARRIENDO"
+from arriendo_camion ac full outer join cliente c on (ac.numrun_cli=c.numrun_cli)
+and 
+extract (year from ac.fecha_ini_arriendo)!='&anno'
+  GROUP BY 
+  C.PNOMBRE_CLI
+  ,C.SNOMBRE_CLI
+  ,C.APPATERNO_CLI
+  ,C.APMATERNO_CLI
+  having count(ac.id_arriendo)=0
+;
+  
+--verificando:
+
+select * from clientes_compras_menos_prom;
+
+--query para verificar las categorias de clientes:
+
+SELECT
+    numrun_cli,
+    dvrun_cli,
+    appaterno_cli,
+    apmaterno_cli,
+    pnombre_cli,
+    snombre_cli,
+    direccion,
+    celular_cli,
+    fono_fijo_cli,
+    renta,
+    fecha_nac_cli,
+    id_comuna,
+    id_categoria_cli,
+    id_estado_civil
+FROM
+    cliente;
+
+-- query para updatear la categoría del cliente
+
+UPDATE cliente
+SET
+    id_categoria_cli = 100
+WHERE
+        numrun_cli in(select c.numrun_cli from 
+clientes_compras_menos_prom ccmp left join cliente c on ( ccmp.nombre_cliente = C.PNOMBRE_CLI||' '||C.SNOMBRE_CLI||' '||C.APPATERNO_CLI||' '||C.APMATERNO_CLI)) ;
+
+
+
+
+
+
+
+-- caso 3
+
+--creación de TABLA CON LOS CLIENTES QUE EN LOS DOS ÚLTIMOS AÑOS NO REALIZARON ARRIENDOS
+
+create table SIN_ARRIENDOS_POR_2_ANIOS AS
+SELECT
+    c.numrun_cli,
+    c.dvrun_cli,
+    c.appaterno_cli,
+    c.apmaterno_cli,
+    c.pnombre_cli,
+    c.snombre_cli,
+    c.direccion,
+    c.celular_cli,
+    c.fono_fijo_cli,
+    c.renta,
+    c.fecha_nac_cli,
+    c.id_comuna,
+    c.id_categoria_cli,
+    c.id_estado_civil
+FROM
+    cliente c join arriendo_camion ac on (c.numrun_cli=ac.numrun_cli)
+    and extract (year from ac.fecha_ini_arriendo)  in (SELECT distinct (extract (year from fecha_ini_arriendo)) año from arriendo_camion where extract (year from fecha_ini_arriendo) < extract (year from sysdate)-1) ;
+
+--BORRADO DE LOS CLIENTES QUE NO HAN ARRENDADO POR MAS DE DOS AÑOS DE LA TABLA CLIENTES
+
+DELETE  FROM ARRIENDO_CAMION
+WHERE numrun_cli IN (SELECT NUMRUN_CLI FROM SIN_ARRIENDOS_POR_2_ANIOS);
+
+DELETE  FROM cliente
+WHERE numrun_cli IN (SELECT NUMRUN_CLI FROM SIN_ARRIENDOS_POR_2_ANIOS);
+
+
+--VERIFICACIÓN
+SELECT
+    numrun_cli,
+    dvrun_cli,
+    appaterno_cli,
+    apmaterno_cli,
+    pnombre_cli,
+    snombre_cli,
+    direccion,
+    celular_cli,
+    fono_fijo_cli,
+    renta,
+    fecha_nac_cli,
+    id_comuna,
+    id_categoria_cli,
+    id_estado_civil
+FROM
+    cliente;
+
+
+
+--CASO 4
