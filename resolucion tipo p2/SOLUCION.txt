@@ -1,0 +1,101 @@
+--CASO 1
+
+--reporte 1:
+SELECT f.numfactura "NRO.FACTURA", v.nombre "VENDEDOR", TO_CHAR(total,'$999G999G999') AS "MONTO FACTURA",
+(SELECT round(AVG(total)) FROM factura WHERE EXTRACT(MONTH FROM fecha) < (EXTRACT(MONTH FROM sysdate)-1)) "VENTA PROMEDIO MES ANTERIOR",
+round(f.TOTAL*v.comision) "COMISION_VENTA"
+FROM detalle_factura d JOIN factura f ON(f.numfactura = d.numfactura)
+LEFT JOIN banco b ON(b.codbanco = f.codbanco)
+LEFT JOIN vendedor v ON (f.rutvendedor=v.rutvendedor)
+WHERE total > (SELECT AVG(total) FROM factura WHERE EXTRACT(MONTH FROM fecha) < (EXTRACT(MONTH FROM sysdate)-1)) AND 
+EXTRACT(month FROM fecha) <= EXTRACT(month FROM SYSDATE) -1
+GROUP BY f.numfactura, v.nombre,f.total,v.comision
+ORDER BY f.total desc;
+
+
+--reporte 2
+
+SELECT f.numfactura "NRO.FACTURA", 
+v.nombre "VENDEDOR",
+v.rutvendedor "RUT VENDEDOR", 
+TO_CHAR(fecha,'fmDD "de" Month "de" YYYY') AS "FECHA", 
+TO_CHAR(total,'$999G999G999') AS "MONTO FACTURA", SUM(cantidad) AS "CANTIDAD PRODUCTOS",
+NVL(descripcion,'SIN BANCO') AS "BANCO"
+FROM detalle_factura d JOIN factura f ON(f.numfactura = d.numfactura)
+LEFT JOIN banco b ON(b.codbanco = f.codbanco)
+left join vendedor v on (v.rutvendedor=f.rutvendedor)
+WHERE total >= (SELECT AVG(total) FROM factura WHERE EXTRACT(MONTH FROM fecha) = 1) AND 
+EXTRACT(YEAR FROM fecha) <= EXTRACT(YEAR FROM SYSDATE) -1
+GROUP BY f.numfactura, v.rutvendedor, v.nombre,fecha, total, descripcion
+HAVING SUM(cantidad) >= 10
+ORDER BY f.numfactura desc;
+
+
+
+--CASO 2
+
+--REPORTE 1:
+
+--UNION 
+SELECT NVL(a.rutcliente,'SIN CLIENTE') AS RUT_CLIENTE, 
+NVL(nombre,'SIN CLIENTE')AS NOMBRE_CLIENTE,
+descripcion,
+COUNT(numfactura)AS CANTIDAD_FACTURAS, 
+NVL(TO_CHAR(credito,'$999g999g999'),'NO APLICA') AS CREDITO
+FROM cliente a JOIN factura b ON(a.rutcliente = b.rutcliente)
+JOIN comuna c ON(c.codcomuna = a.codcomuna)
+WHERE EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM SYSDATE) - 1
+GROUP BY a.rutcliente, nombre, credito, descripcion
+UNION 
+SELECT 'SIN CLIENTE', 'SIN CLIENTE', 'NO APLICA', COUNT(numfactura), 'NO APLICA'
+FROM factura
+WHERE rutcliente IS NULL AND EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM SYSDATE) - 1
+ORDER BY 1;
+
+--JOIN 
+SELECT
+    NVL(C.RUTCLIENTE,'SIN CLIENTE') AS "RUT_CLIENTE"
+    ,NVL(C.NOMBRE,'SIN CLIENTE') AS "NOMBRE_DEL_CLIENTE"
+    ,NVL(CO.DESCRIPCION,'NO APLICA') AS "DESCRIPCION"
+    ,COUNT(F.NUMFACTURA) AS "CANTIDAD_FACTURAS"
+    ,'$'||NVL(TO_CHAR(C.CREDITO,'99G999G999'),'NO APLICA') AS "CREDITO"
+FROM CLIENTE C   JOIN COMUNA CO ON (C.CODCOMUNA=CO.CODCOMUNA)
+     FULL OUTER JOIN FACTURA F ON (F.RUTCLIENTE=C.RUTCLIENTE)
+    
+    WHERE EXTRACT (YEAR FROM F.FECHA) = EXTRACT (YEAR FROM SYSDATE)-1
+    GROUP BY  C.RUTCLIENTE,C.NOMBRE,CO.DESCRIPCION,C.CREDITO
+    ;
+
+
+--INSERT A APLICAR
+INSERT INTO resumen_cliente
+SELECT NVL(a.rutcliente,'SIN CLIENTE'), 
+NVL(nombre,'SIN CLIENTE'), descripcion,
+COUNT(numfactura), 
+NVL(TO_CHAR(credito,'$999g999g999'),'NO APLICA')
+FROM cliente a JOIN factura b ON(a.rutcliente = b.rutcliente)
+JOIN comuna c ON(c.codcomuna = a.codcomuna)
+WHERE EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM SYSDATE) - 1
+GROUP BY a.rutcliente, nombre, credito, descripcion
+UNION 
+SELECT 'SIN CLIENTE', 'SIN CLIENTE', 'NO APLICA', COUNT(numfactura), 'NO APLICA'
+FROM factura
+WHERE rutcliente IS NULL AND EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM SYSDATE) - 1
+ORDER BY 1;
+
+--SELECT PARA VERIFICAR PRE UPDATE
+SELECT rutcliente, descuento_vigente, estado FROM cliente 
+WHERE rutcliente IN (SELECT rut_cliente FROM resumen_cliente);
+
+--UPDATE A APLICAR
+UPDATE cliente
+SET descuento_vigente = descuento_vigente + 20000, estado = 'C'
+WHERE rutcliente IN(SELECT rut_cliente FROM resumen_cliente WHERE total_documentos >= 3);
+
+
+--SELECT PARA VERIFICAR POST UPDATE
+SELECT rutcliente, descuento_vigente, estado FROM cliente 
+WHERE rutcliente IN (SELECT rut_cliente FROM resumen_cliente);
+
+--RESPUESTA A LAS PREGUNTAS
+
