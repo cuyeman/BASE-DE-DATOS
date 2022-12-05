@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="EC2AMAZ-1FMELI5.DW_BICICLETAS.DESTINO_EXAMEN"
+  DTS:DTSID="{C6208B1D-A747-4D36-B3AC-266C3799F18C}"
+  DTS:CreationName="OLEDB">
+  <DTS:ObjectData>
+    <DTS:ConnectionManager
+      DTS:ConnectRetryCount="1"
+      DTS:ConnectRetryInterval="5"
+      DTS:ConnectionString="Data Source=EC2AMAZ-1FMELI5;User ID=DESTINO_EXAMEN;Initial Catalog=DW_BICICLETAS;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;">
+      <DTS:Password
+        DTS:Name="Password"
+        Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAdxdYHMvH6UOZhdgQEUC+ggAAAAACAAAAAAAQZgAAAAEAACAAAABazWRfGhEW5F2PAWRNqhbyi1MnNeGC+BayhmRzcjEwMQAAAAAOgAAAAAIAACAAAAB/qqZmzbn04SPxd8vY0AzbRAQcCnIXnMMXNZND/1MSuHAAAAAbTIJb6C8bZGTfwMMGynZCPgkpYsfWyInm97mkk8xUjadU0u7E8cPdBuY4a1IxkpLf9CaEBMp+UiEKSQkDnMr8Th/JqMKNOEwZxSxqBR0477/Qr1AJfQjpw+XklM/7AtAoi/70NEDwRpjpzobxcbJSQAAAAMc8dvFpq7LHOM/FYRtoty/YdGI8AjxgqBPOoLtHjxQix4THK63yNQm2fThBC97QnLQuijhLxtqPXKepPVzYrYI=</DTS:Password>
+    </DTS:ConnectionManager>
+  </DTS:ObjectData>
+</DTS:ConnectionManager>

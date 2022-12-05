@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="localhost.DW_BICICLETAS.DESTINO_EXAMEN"
+  DTS:DTSID="{B69A236F-CB44-4532-9755-A7C4BFB82459}"
+  DTS:CreationName="ADO.NET:System.Data.SqlClient.SqlConnection, System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <DTS:ObjectData>
+    <DTS:ConnectionManager
+      DTS:ConnectionString="Data Source=localhost;User ID=DESTINO_EXAMEN;Initial Catalog=DW_BICICLETAS;Persist Security Info=True;Application Name=SSIS-ETL_REPASO_EXAMEN_BUSINESS_INTELLIGENCE-{B69A236F-CB44-4532-9755-A7C4BFB82459}localhost.DW_BICICLETAS.DESTINO_EXAMEN;">
+      <DTS:Password
+        DTS:Name="Password"
+        Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAdxdYHMvH6UOZhdgQEUC+ggAAAAACAAAAAAAQZgAAAAEAACAAAAAjbMv6BomuSzs911SZB0pwOz9qLn/x/7aKVIERdEGhwAAAAAAOgAAAAAIAACAAAAD98yp062DlNfaej3u0lL765BgjfX/RAaqUa5o0S9LtGnAAAABv/utkhP6vBiwmFfVgW+LHF7VDAzLRZaPq6zW40G06Z/4wP4BU61DgbGblGEV4dSRk/Ck5QpqBCGqyQ7REj6r5ItTib+A+oFNadAbWYGmBs9uMn6Rr8JkmQ6ZjTfFefxeY2KRd6LCIT8lhbczD8eZwQAAAAIKJA4iPt56adfkdkR69zGkqbtQfc1eIldOp8mlTbWbzw2CWx1wL34Px2jG2H662dqIvbabVdCUwCFgGIbQMnno=</DTS:Password>
+    </DTS:ConnectionManager>
+  </DTS:ObjectData>
+</DTS:ConnectionManager>
